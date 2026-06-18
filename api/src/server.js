@@ -10,12 +10,11 @@ const PORT = Number(process.env.PORT || 3000);
 const wrap = (fn) => (req, res, next) => fn(req, res, next).catch(next);
 
 async function start() {
-  await init(); // schema + default user are applied here, on load.
-
+  await init(); 
   const app = express();
   app.use(express.json());
 
-  // Health check (handy for Docker healthchecks / debugging).
+  // Health check.
   app.get('/health', (req, res) => res.json({ status: 'ok' }));
 
   // Public: login.
