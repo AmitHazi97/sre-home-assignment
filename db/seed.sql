@@ -1,4 +1,4 @@
--- Default user (Part 2.4). Created automatically on load.
+-- Default user. Created automatically on load.
 -- Credentials:  username: admin  |  email: admin@example.com  |  password: Admin123!
 -- The password is stored as a bcrypt hash, never in plaintext.
 -- ON DUPLICATE KEY UPDATE makes this idempotent (safe to run on every startup).
