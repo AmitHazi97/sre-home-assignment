@@ -1,4 +1,4 @@
-// Part 3.3: consume TiCDC change messages from Kafka, process them, and log structured to console.
+//consume TiCDC change messages from Kafka, process them, and log structured to console.
 const { Kafka, logLevel } = require('kafkajs');
 const { logger } = require('./logger');
 
