@@ -1,10 +1,8 @@
 // the app's init function lives in a file called main-app-layout.
-//
 // init() runs automatically on startup:
 //   1. waits until TiDB is reachable (important inside Docker, where the API may start first)
 //   2. applies db/schema.sql  -> creates the database + tables
 //   3. applies db/seed.sql    -> creates the default user
-//
 // It is idempotent: safe to run on every boot (CREATE ... IF NOT EXISTS / ON DUPLICATE KEY).
 const fs = require('fs');
 const path = require('path');
