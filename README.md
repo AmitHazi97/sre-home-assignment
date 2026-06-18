@@ -35,7 +35,7 @@ database-change monitoring pipeline built on TiCDC and Kafka.
 
 - Docker and Docker Compose v2
 
-## Run (single command)
+## Run
 
 ```bash
 docker compose up -d --build
