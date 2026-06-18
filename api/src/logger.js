@@ -1,4 +1,4 @@
-// log4js is required by the assignment (Part 3.1).
+// log4js is required by the assignment.
 // We define a custom JSON layout so every log line is a structured JSON object.
 const log4js = require('log4js');
 
@@ -25,7 +25,7 @@ log4js.configure({
 
 const logger = log4js.getLogger();
 
-// Part 3.1: every login writes a JSON log with timestamp, user ID, action, IP address.
+// every login writes a JSON log with timestamp, user ID, action, IP address.
 // (timestamp + level are added by the layout above.)
 function logLogin({ userId, ip }) {
   logger.info({ action: 'LOGIN', userId, ip });
