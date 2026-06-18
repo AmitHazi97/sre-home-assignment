@@ -103,7 +103,7 @@ services:
       timeout: 5s
       retries: 10
 
-  # ---------- CDC auto-start (Part 3.2) ----------
+  # ---------- CDC auto-start ----------
   # One-shot: waits for TiCDC + Kafka, then creates the changefeed if it doesn't exist, then exits.
   # Idempotent (checks first) so restarts don't error on "already exists".
 
