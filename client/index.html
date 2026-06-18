@@ -40,7 +40,7 @@
       const username = $('username').value.trim();
       const password = $('password').value;
 
-      // Client-side form validation (Part 1.2). Server validates too.
+      // Client-side form validation. Server validates too.
       if (!username || !password) {
         show('Both username/email and password are required.', false);
         return;
@@ -62,7 +62,7 @@
           return;
         }
 
-        // Token management (Part 1.3): store it, then send it as an HTTP header.
+        // Token management: store it, then send it as an HTTP header.
         localStorage.setItem('token', data.token);
 
         const me = await fetch('/api/me', {
