@@ -3,7 +3,7 @@ const { Kafka, logLevel } = require('kafkajs');
 const { logger } = require('./logger');
 
 // Locally the broker is reached on localhost:29092 (the EXTERNAL listener).
-// Inside Docker it will be kafka:9092 (set via the KAFKA_BROKERS env var).
+// Inside Docker it will be kafka:9092.
 const BROKERS = (process.env.KAFKA_BROKERS || 'localhost:29092').split(',');
 const TOPIC = process.env.KAFKA_TOPIC || 'tidb-changes';
 const GROUP_ID = process.env.KAFKA_GROUP_ID || 'cdc-consumer';
@@ -46,7 +46,7 @@ async function run() {
         return;
       }
 
-      // canal-json: isDdl=true for schema changes; type is the operation.
+      // canal-json: isDdl=true for schema changes;
       if (evt.isDdl || !DML.has(evt.type)) return;
 
       logger.info({
@@ -55,8 +55,8 @@ async function run() {
         database: evt.database,
         table: evt.table,
         pk: evt.pkNames || null,
-        data: redact(evt.data) || null,   // row after change (the removed row for DELETE)
-        old: redact(evt.old) || null,     // previous values (UPDATE only)
+        data: redact(evt.data) || null,   // row after change 
+        old: redact(evt.old) || null,     // previous values 
       });
     },
   });
