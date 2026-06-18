@@ -1,0 +1,15 @@
+{
+  "name": "sre-api",
+  "version": "1.0.0",
+  "description": "Auth API: login, token management, log4js login logging",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "express": "^4.19.2",
+    "log4js": "^6.9.1",
+    "mysql2": "^3.11.0"
+  }
+}

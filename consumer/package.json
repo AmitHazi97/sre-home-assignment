@@ -1,0 +1,13 @@
+{
+  "name": "sre-consumer",
+  "version": "1.0.0",
+  "description": "Kafka consumer: reads TiCDC change events and logs them structured (Part 3.3)",
+  "main": "src/consumer.js",
+  "scripts": {
+    "start": "node src/consumer.js"
+  },
+  "dependencies": {
+    "kafkajs": "^2.2.4",
+    "log4js": "^6.9.1"
+  }
+}

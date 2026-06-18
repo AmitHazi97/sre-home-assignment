@@ -1,0 +1,169 @@
+# Full stack: TiDB (PD + TiKV + TiDB) + TiCDC + Kafka + cdc-init + api + consumer + client.
+# Run everything with one command:   docker compose up -d --build
+# Tear everything down (incl. data): docker compose down -v
+
+services:
+  # ---------- TiDB cluster ----------
+
+  pd:
+    image: pingcap/pd:v7.5.1
+    container_name: pd
+    ports:
+      - "2379:2379"
+    command:
+      - --name=pd
+      - --client-urls=http://0.0.0.0:2379
+      - --advertise-client-urls=http://pd:2379
+      - --peer-urls=http://0.0.0.0:2380
+      - --advertise-peer-urls=http://pd:2380
+      - --initial-cluster=pd=http://pd:2380
+      - --data-dir=/data/pd
+    volumes:
+      - pd-data:/data
+    restart: on-failure
+
+  tikv:
+    image: pingcap/tikv:v7.5.1
+    container_name: tikv
+    command:
+      - --addr=0.0.0.0:20160
+      - --advertise-addr=tikv:20160
+      - --pd=pd:2379
+      - --data-dir=/data/tikv
+    volumes:
+      - tikv-data:/data
+    depends_on:
+      - pd
+    restart: on-failure
+
+  tidb:
+    image: pingcap/tidb:v7.5.1
+    container_name: tidb
+    ports:
+      - "4000:4000"
+      - "10080:10080"
+    command:
+      - --store=tikv
+      - --path=pd:2379
+      - --advertise-address=tidb
+    depends_on:
+      - tikv
+    restart: on-failure
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:10080/status || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  # ---------- TiCDC ----------
+
+  ticdc:
+    image: pingcap/ticdc:v7.5.1
+    container_name: ticdc
+    ports:
+      - "8300:8300"
+    command:
+      - /cdc
+      - server
+      - --addr=0.0.0.0:8300
+      - --advertise-addr=ticdc:8300
+      - --pd=http://pd:2379
+    depends_on:
+      tidb:
+        condition: service_healthy
+    restart: on-failure
+
+  # ---------- Kafka (KRaft) ----------
+
+  kafka:
+    image: apache/kafka:3.7.0
+    container_name: kafka
+    ports:
+      - "29092:29092"
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: INTERNAL://0.0.0.0:9092,EXTERNAL://0.0.0.0:29092,CONTROLLER://0.0.0.0:9093
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka:9092,EXTERNAL://localhost:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+    volumes:
+      - kafka-data:/var/lib/kafka/data
+    restart: on-failure
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:9092 --list || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  # ---------- CDC auto-start (Part 3.2) ----------
+  # One-shot: waits for TiCDC + Kafka, then creates the changefeed if it doesn't exist, then exits.
+  # Idempotent (checks first) so restarts don't error on "already exists".
+
+  cdc-init:
+    image: pingcap/ticdc:v7.5.1
+    container_name: cdc-init
+    depends_on:
+      ticdc:
+        condition: service_started
+      kafka:
+        condition: service_healthy
+    restart: on-failure
+    entrypoint: ["/bin/sh", "-c", "until /cdc cli changefeed list --server=http://ticdc:8300 >/dev/null 2>&1; do echo 'waiting for ticdc'; sleep 2; done; if /cdc cli changefeed query --server=http://ticdc:8300 --changefeed-id=db-changes >/dev/null 2>&1; then echo 'changefeed already exists'; else /cdc cli changefeed create --server=http://ticdc:8300 --sink-uri='kafka://kafka:9092/tidb-changes?protocol=canal-json&kafka-version=3.7.0' --changefeed-id=db-changes; fi"]
+
+  # ---------- Application services ----------
+
+  api:
+    build:
+      context: .
+      dockerfile: api/Dockerfile
+    container_name: api
+    environment:
+      DB_HOST: tidb
+      DB_PORT: "4000"
+      DB_USER: root
+      DB_PASSWORD: ""
+      DB_NAME: appdb
+      PORT: "3000"
+    ports:
+      - "3000:3000"
+    depends_on:
+      tidb:
+        condition: service_healthy
+    restart: on-failure
+
+  consumer:
+    build:
+      context: ./consumer
+    container_name: consumer
+    environment:
+      KAFKA_BROKERS: kafka:9092
+      KAFKA_TOPIC: tidb-changes
+      KAFKA_GROUP_ID: cdc-consumer
+    depends_on:
+      kafka:
+        condition: service_healthy
+      cdc-init:
+        condition: service_completed_successfully
+    restart: on-failure
+
+  client:
+    build:
+      context: ./client
+    container_name: client
+    ports:
+      - "8080:80"
+    depends_on:
+      - api
+
+volumes:
+  pd-data:
+  tikv-data:
+  kafka-data:
