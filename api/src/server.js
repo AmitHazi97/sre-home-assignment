@@ -1,4 +1,4 @@
-// Entrypoint: run the init function (from main-app-layout) first, then serve the REST API.
+// run the init function (from main-app-layout) first, then serve the REST API.
 const express = require('express');
 const { init } = require('./main-app-layout');
 const { login, authMiddleware } = require('./auth');
@@ -10,7 +10,7 @@ const PORT = Number(process.env.PORT || 3000);
 const wrap = (fn) => (req, res, next) => fn(req, res, next).catch(next);
 
 async function start() {
-  await init(); // Part 2.4: schema + default user are applied here, on load.
+  await init(); // schema + default user are applied here, on load.
 
   const app = express();
   app.use(express.json());
