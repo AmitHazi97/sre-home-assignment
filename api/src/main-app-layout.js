@@ -1,6 +1,6 @@
-// REQUIRED by the assignment: the app's init function lives in a file called main-app-layout.
+// the app's init function lives in a file called main-app-layout.
 //
-// init() runs automatically on startup (Part 2.4):
+// init() runs automatically on startup:
 //   1. waits until TiDB is reachable (important inside Docker, where the API may start first)
 //   2. applies db/schema.sql  -> creates the database + tables
 //   3. applies db/seed.sql    -> creates the default user
