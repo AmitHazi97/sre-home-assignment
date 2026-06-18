@@ -1,14 +1,14 @@
-// Part 1.2 / 1.3 + Part 3.1: login, token management, and login logging.
+// login, token management, and login logging.
 const crypto = require('crypto');
 const bcrypt = require('bcryptjs');
 const pool = require('./db');
 const { logLogin, logger } = require('./logger');
 
-// POST /api/login  { username, password }   (username may be a username OR an email)
+// POST /api/login  { username, password }   
 async function login(req, res) {
   const { username, password } = req.body || {};
 
-  // Server-side validation (the client validates too, but never trust the client).
+  // Server-side validation
   if (!username || !password) {
     return res.status(400).json({ error: 'username and password are required' });
   }
@@ -27,11 +27,11 @@ async function login(req, res) {
     return res.status(401).json({ error: 'invalid credentials' });
   }
 
-  // Issue a random token and store it in the DB (Part 1.3).
+  // Issue a random token and store it in the DB 
   const token = crypto.randomBytes(32).toString('hex');
   await pool.query('INSERT INTO tokens (user_id, token) VALUES (?, ?)', [user.id, token]);
 
-  // Part 3.1: structured JSON login log -> timestamp, user ID, action, IP address.
+  // structured JSON login log -> timestamp, user ID, action, IP address.
   const ip = (req.headers['x-forwarded-for'] || req.socket.remoteAddress || '').toString();
   logLogin({ userId: user.id, ip });
 
@@ -41,7 +41,7 @@ async function login(req, res) {
   });
 }
 
-// Auth middleware: token arrives as an HTTP header (Part 1.3).
+// Auth middleware: token arrives as an HTTP header.
 // Accepts "Authorization: Bearer <token>", "Authorization: <token>", or "x-auth-token: <token>".
 async function authMiddleware(req, res, next) {
   const header = req.headers['authorization'] || req.headers['x-auth-token'];
