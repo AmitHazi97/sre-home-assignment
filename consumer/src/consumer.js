@@ -14,6 +14,20 @@ const consumer = kafka.consumer({ groupId: GROUP_ID });
 // We only log real row changes. DDL (CREATE/ALTER) and watermark messages are skipped.
 const DML = new Set(['INSERT', 'UPDATE', 'DELETE']);
 
+// Never write secrets into the change log. Mask these fields before logging.
+const SENSITIVE = new Set(['password_hash', 'password', 'token']);
+
+function redact(rows) {
+  if (!Array.isArray(rows)) return rows; // null / undefined pass through unchanged
+  return rows.map((row) => {
+    const out = {};
+    for (const [key, value] of Object.entries(row)) {
+      out[key] = SENSITIVE.has(key) ? '***REDACTED***' : value;
+    }
+    return out;
+  });
+}
+
 async function run() {
   await consumer.connect();
   await consumer.subscribe({ topic: TOPIC, fromBeginning: true });
@@ -41,8 +55,8 @@ async function run() {
         database: evt.database,
         table: evt.table,
         pk: evt.pkNames || null,
-        data: evt.data || null,   // row after change (the removed row for DELETE)
-        old: evt.old || null,     // previous values (UPDATE only)
+        data: redact(evt.data) || null,   // row after change (the removed row for DELETE)
+        old: redact(evt.old) || null,     // previous values (UPDATE only)
       });
     },
   });
