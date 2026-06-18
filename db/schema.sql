@@ -1,4 +1,4 @@
--- Database structure (Part 2.4: imported automatically on load by the API init function)
+-- Database structure (imported automatically on load by the API init function)
 
 CREATE DATABASE IF NOT EXISTS appdb;
 USE appdb;
@@ -11,7 +11,7 @@ CREATE TABLE IF NOT EXISTS users (
   created_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Auth tokens are stored in the DB (Part 1.3) and sent back as HTTP headers by the client.
+-- Auth tokens are stored in the DB and sent back as HTTP headers by the client.
 CREATE TABLE IF NOT EXISTS tokens (
   id         INT PRIMARY KEY AUTO_INCREMENT,
   user_id    INT NOT NULL,
